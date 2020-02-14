@@ -13,6 +13,6 @@
   border-color: #198419;
   
 
-/* .canvas-container {
-  
-} */
+#canvas-container {
+ border-color: "black"
+}

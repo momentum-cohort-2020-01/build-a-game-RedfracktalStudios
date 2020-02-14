@@ -1,13 +1,69 @@
 class Game {
   constructor() {
 
+    const canvas = document.querySelector('#canvas');
+    const screen = canvas.getContext('2d');
+    const gameSize = { x: canvas.width, y: canvas.height }
+    this.player = new Player(this, gameSize);
+    this.bodies = []
+    this.bodies = this.bodies.concat(new Player(this, gameSize));
 
-    const canvas = document.getElementById("#canvas");
-    const screen = canvas.getContext("2d");
+    const tick = () => {
+      this.update();
+      this.draw(screen, gameSize);
+      requestAnimationFrame(tick);
+    };
+
+    tick();
+  }
+
+
+
+  update() {
+    for (let i = 0; i < this.bodies.length; i++) {
+      this.bodies[i].update();
+    }
+  }
+  draw(screen, gameSize) {
+    screen.clearRect(0, 0, gameSize.x, gameSize.y)
+
+    // requestAnimationFrame(tick)
+
+    this.player.draw(screen, gameSize)
+  }
+
+}
+
+
+
+class Player {
+  constructor(game, gameSize) {
+    this.size = { x: 30, y: 30 }
+    this.center = { x: gameSize.x / 2, y: gameSize.y - this.size.y * 2 }
+  }
+  draw(screen, gameSize) {
+
+    screen.fillStyle = "ff0000"
+
+    let startingXPosition = this.center.x - this.size.x / 2
+    let startingYPosition = this.center.y - this.size.y / 2
+    let gamePlayerWidth = this.size.x
+    let gamePlayerHeight = this.size.y
+
+    screen.fillRect(startingXPosition, startingYPosition, gamePlayerWidth, gamePlayerHeight)
+
+  }
+  update() {
+    this.draw
   }
 }
-console.log(screen)
-//     const gameSize = { x: canvas.width, y: canvas.height };
+window.addEventListener("load", function () {
+  new Game();
+})
+
+
+
+
 //     this.player = new this.player(this, gameSize);
 
 //     const tick = () => {
@@ -40,9 +96,8 @@ console.log(screen)
 //   );
 //   screen.fillStyle = "928484";
 // }
-// window.addEventListener("load", function)() {
-//   new Game();
-// }
+
+
 
 //////////////////////////////////////////////////////
 
