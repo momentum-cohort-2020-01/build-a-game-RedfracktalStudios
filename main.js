@@ -1,240 +1,150 @@
 class Game {
   constructor() {
-
     const canvas = document.querySelector('#canvas');
     const screen = canvas.getContext('2d');
     const gameSize = { x: canvas.width, y: canvas.height }
-    this.player = new Player(this, gameSize);
+
     this.bodies = []
-    this.bodies = this.bodies.concat(new Player(this, gameSize));
+    this.bodies = this.bodies.concat(new Player(this, gameSize))
+    this.bodies = this.bodies.concat(createCars(this))
 
-    const tick = () => {
-      this.update();
-      this.draw(screen, gameSize);
-      requestAnimationFrame(tick);
-    };
+    this.score = 0
 
-    tick();
+    let tick = () => {
+      if (this.bodies.length < 5) {
+        this.bodies = this.bodies.concat(createCars(this))
+      }
+      this.update()
+      this.draw(screen, gameSize)
+      requestAnimationFrame(tick)
+    }
+    tick()
   }
-
-
-
   update() {
+    this.keepScore()
+    let canvas = document.getElementById('canvas')
+    this.bodies = this.bodies.filter(this.collision)
+    this.bodies = this.bodies.filter(body => body.center.y >= 0 - 50)
+    this.bodies = this.bodies.filter(body => body.center.y <= canvas.height + 50)
     for (let i = 0; i < this.bodies.length; i++) {
-      this.bodies[i].update();
+      this.bodies[i].update()
     }
   }
+
+  collision = (b1) => {
+    return this.bodies.filter(function (b2) { return colliding(b1, b2) }).length === 0
+  }
+
   draw(screen, gameSize) {
     screen.clearRect(0, 0, gameSize.x, gameSize.y)
+    for (let i = 0; i < this.bodies.length; i++) {
+      drawRect(screen, this.bodies[i], '#8D021F')
+    }
+    this.drawScore(screen, 'white')
+  }
 
-    // requestAnimationFrame(tick)
+  drawScore(screen, color) {
+    screen.fillStyle = color
+    screen.font = '1rem sans-serif'
+    screen.fillText(`Score: ${this.score}`, 10, 15)
+  }
 
-    this.player.draw(screen, gameSize)
+
+  keepScore() {
+    for (let body of this.bodies) {
+      if (body instanceof Car && !this.collision(body)) {
+        this.score += 1
+      }
+    }
   }
 
 }
 
+class traffic {
+  constructor(game, center) {
+    this.game = game
+    this.center = center
+    this.size = { x: 30, y: 40 }
+    this.moveY = 1
+    this.speedY = 3
+  }
+  update() {
+    this.center.y += this.speedY
+    this.moveY += this.speedY
+  }
+}
 
+function createCars(game) {
+  let cars = []
+  for (let i = 0; i < 1; i++) {
+    let x = Math.random() * 250
+    let y = 0
+    cars.push(new traffic(game, { x: x, y: y }))
+  }
+  return cars
+}
 
 class Player {
   constructor(game, gameSize) {
-    this.size = { x: 30, y: 30 }
+    this.game = game
+    this.size = { x: 30, y: 40 }
     this.center = { x: gameSize.x / 2, y: gameSize.y - this.size.y * 2 }
+
+    this.keyboarder = Keyboarder
   }
-  draw(screen, gameSize) {
 
-    screen.fillStyle = "ff0000"
+  update() {
+    if (this.center.x > 0) {
+      if (this.keyboarder.isDown(this.keyboarder.KEYS.LEFT)) {
+        this.center.x -= 2
+      }
+    }
+    if (this.center.x < 300) {
+      if (this.keyboarder.isDown(this.keyboarder.KEYS.RIGHT)) {
+        this.center.x += 2
+      }
+    }
 
-    let startingXPosition = this.center.x - this.size.x / 2
-    let startingYPosition = this.center.y - this.size.y / 2
-    let gamePlayerWidth = this.size.x
-    let gamePlayerHeight = this.size.y
 
-    screen.fillRect(startingXPosition, startingYPosition, gamePlayerWidth, gamePlayerHeight)
+  }
+}
+
+
+class Car {
+  constructor(center, velocity) {
+    this.center = center
+    this.size = { x: 30, y: 40 }
+    this.velocity = velocity
+    this.ticks = 0
 
   }
   update() {
-    this.draw
+    this.ticks += 1
+    if (this.ticks % 2 === 0) {
+      this.center.x += this.velocity.x
+      this.center.y += this.velocity.y - 10
+    }
   }
 }
-window.addEventListener("load", function () {
-  new Game();
+
+function drawRect(screen, body, color) {
+  let position = screen.fillStyle
+  screen.fillStyle = color
+  screen.fillRect(body.center.x - body.size.x / 2, body.center.y - body.size.y / 2,
+    body.size.x, body.size.y)
+  screen.fillStyle = position
+}
+
+function colliding(b1, b2) {
+  return !(
+    b1 === b2 ||
+    b1.center.x + b1.size.x / 2 < b2.center.x - b2.size.x / 2 ||
+    b1.center.y + b1.size.y / 2 < b2.center.y - b2.size.y / 2 ||
+    b1.center.x - b1.size.x / 2 > b2.center.x + b2.size.x / 2 ||
+    b1.center.y - b1.size.y / 2 > b2.center.y + b2.size.y / 2
+  )
+}
+
+window.addEventListener('load', function () {
+  new Game()
 })
-
-
-
-
-//     this.player = new this.player(this, gameSize);
-
-//     const tick = () => {
-//       this.update();
-//       this.draw(screen, gameSize);
-//       requestAnimationFrame(tick);
-//     };
-//     tick();
-//   }
-
-//   update() {
-//     for (let i = 0; i < this.bodies.length; i++) {
-//       this.bodies[i].update();
-//     }
-//   }
-
-//   draw(screen, gameSize) {
-//     screen.clearRect(0, 0, gameSize.x, gameSize.y);
-//     for (let i = 0; i < this.bodies.length; i++) {
-//       drawRect(screen, this.bodies[i]);
-//     }
-//   }
-// }
-// function drawRect(screen, body) {
-//   screen.fillRect(
-//     body.center.x - body.size.x / 2,
-//     body.center.y / 2,
-//     body.size.x,
-//     body.size.y
-//   );
-//   screen.fillStyle = "928484";
-// }
-
-
-
-//////////////////////////////////////////////////////
-
-
-
-
-
-
-//       this.bodies[i].update()
-  // screen.fillStyle = "gray"
-  // screen.fillRect(0, 0, canvas.width, canvas.height);
-  // this.name = "Game"
-
-  //     this.bodies = []
-  //     // this.bodies = this.bodies.concat(createCars(this))
-  //     this.bodies = this.bodies.concat(new Wralph(this, gameSize))
-  //     let tick = () => {
-  //       this.update()
-  //       this.draw(screen, gameSize)
-  //       requestAnimationFrame(tick)
-  //     }
-  //     tick()
-  //   }
-  //   update() {
-  //     // let notCollidingWithAnything = (b1) => {
-  //     //   return this.bodies.filter(function (b2) { return colliding(b1, b2) }).length === 0
-  //     // }
-  //     // this.bodies = this.bodies.filter(notCollidingWithAnything)
-  //     for (let i = 0; i < this.bodies.length; i++) {
-  //       this.bodies[i].update()
-  //     }
-  //   }
-
-  //   draw(screen, gameSize) {
-  //     screen.clearRect(0, 0, gameSize.x, gameSize.y)
-
-  //     for (let i = 0; i < this.bodies.length; i++) {
-  //       // drawRect(screen, this.bodies[i])
-  //       // let startingXPosition = this.player.center.x - this.player.size.x / 2
-  //       // let startingYPosition = this.player.center.y - this.player.size.y / 2
-  //       // let gamePlayerWidth = this.player.size.x
-  //       // let gamePlayerHeight = this.player.size.y
-
-  //       screen.fillRect(200, 200, 200, 200)
-  //     }
-  //   }
-
-  // }
-
-
-
-
-
-  // class Wralph {
-  //   constructor(game, center) {
-  //     this.game = game
-  //     this.center = center
-  //     this.size = { x: 30, y: 40 }
-  //     this.color = 'red'
-  //     this.keyboarder = this.keyboarder
-  //   }
-  //   update() {
-  //     this.center.y += this.speedY
-  //     // this.move.y += this.speedY
-  //   }
-
-  // }
-
-
-
-
-
-  // // var player = function (game, center) {
-  // //   this.game = game;
-  // //   this.center = center;
-  // //   this.size = { x: 15, y: 15 };
-
-  // //   // Invaders patrol from left to right and back again. this.patrolX records the current (relative) position of the invader in their patrol. It starts at 0, increases to 40, then decreases to 0, and so forth.
-  // //   this.patrolX = 0;
-
-  // //   // The x speed of the invader. A positive value moves the invader right. A negative value moves it left.
-
-  // //   this.speedX = 0.3;
-  // // };
-
-  // // window.addEventListener('load', function () {
-  // //   new Game()
-  // // })
-
-  // // window.addEventListener('load', function () {
-  // //   new Game()
-  // // })
-  // // screen.fillStyle = "#07BEB8"
-  // // // `fillRect` takes 4 values (I know this from the MDN docs)
-  // // // These values tell the shape we're going to draw where it should show up and how big it is
-  // // let startingXPosition = this.player.center.x - this.player.size.x / 2
-  // // let startingYPosition = this.player.center.y - this.player.size.y / 2
-  // // let gamePlayerWidth = this.player.size.x
-  // // let gamePlayerHeight = this.player.size.y
-
-  // // screen.fillRect(startingXPosition, startingYPosition, gamePlayerWidth, gamePlayerHeight)
-
-  // //////////////////////////////////////////////////////////////////////
-  // //////////////////////////////////////////////////////////////////////
-
-  // // Other functions
-  // // ---------------
-
-  // // **drawRect()** draws passed body as a rectangle to `screen`, the drawing context.
-  // // function drawRect(screen, body) {
-  // //   screen.fillRect(body.center.x - body.size.x / 2, body.center.y - body.size.y / 2,
-  // //     body.size.x, body.size.y)
-  // // }
-
-  // // **colliding()** returns true if two passed bodies are colliding.
-  // // The approach is to test for five situations.  If any are true,
-  // // the bodies are definitely not colliding.  If none of them
-  // // are true, the bodies are colliding.
-  // // 1. b1 is the same body as b2.
-  // // 2. Right of `b1` is to the left of the left of `b2`.
-  // // 3. Bottom of `b1` is above the top of `b2`.
-  // // 4. Left of `b1` is to the right of the right of `b2`.
-  // // 5. Top of `b1` is below the bottom of `b2`.
-  // // function colliding(b1, b2) {
-  // //   return !(
-  // //     b1 === b2 ||
-  // //     b1.center.x + b1.size.x / 2 < b2.center.x - b2.size.x / 2 ||
-  // //     b1.center.y + b1.size.y / 2 < b2.center.y - b2.size.y / 2 ||
-  // //     b1.center.x - b1.size.x / 2 > b2.center.x + b2.size.x / 2 ||
-  // //     b1.center.y - b1.size.y / 2 > b2.center.y + b2.size.y / 2
-  // //   )
-  // // }
-
-  // // Start game
-  // // ----------
-
-  // // When the DOM is ready, create (and start) the game.
-
-
-  // let game = new Game()
